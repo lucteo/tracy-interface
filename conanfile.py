@@ -19,11 +19,11 @@ class TracyInterfaceRecipe(ConanFile):
    default_options = {"shared": False, "fPIC": True, "with_profiling": True, "with_tracy_bin": True}
 
    exports = "LICENSE"
-   exports_sources = ("src/*", "CMakeLists.txt")
+   exports_sources = ("src/*", "external/*", "CMakeLists.txt", "Config.cmake.in")
 
    def set_version(self):
-      # Get the version from src/CMakeList.txt project definition
-      content = tools.load(path.join(self.recipe_folder, "src/CMakeLists.txt"))
+      # Get the version from CMakeLists.txt project definition
+      content = tools.load(path.join(self.recipe_folder, "CMakeLists.txt"))
       version = re.search(r"project\([^\)]+VERSION (\d+\.\d+\.\d+)[^\)]*\)", content).group(1)
       self.version = version.strip()
 
@@ -58,7 +58,7 @@ class TracyInterfaceRecipe(ConanFile):
       if self.options.with_tracy_bin:
          cmake.definitions["tracy-interface.with_tracy_bin"] = "ON"
 
-      cmake.configure(source_folder="src")
+      cmake.configure()
       return cmake
 
 
