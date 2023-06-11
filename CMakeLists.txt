@@ -18,35 +18,27 @@ string(TIMESTAMP tracy-interface_BUILD_DATE "%Y-%m-%d")
 string(TIMESTAMP tracy-interface_BUILD_YEAR "%Y")
 
 # Library options
-option(tracy-interface.profiling "Enable Tracy profiling" OFF)
 option(tracy-interface.with_tracy_bin "Also build the Tracy profiler executable" OFF)
 
 message(STATUS "Library ver      : ${tracy-interface_VERSION}")
 message(STATUS "Build date       : ${tracy-interface_BUILD_DATE}")
 message(STATUS "Build year       : ${tracy-interface_BUILD_YEAR}")
-message(STATUS "Use profiling    : ${tracy-interface.profiling}")
 message(STATUS "With Tracy bin   : ${tracy-interface.with_tracy_bin}")
+message(STATUS)
+
+find_path(TRACY_PATH "Tracy.hpp" PATH "external/tracy/")
+if(NOT EXISTS "${TRACY_PATH}")
+    message(FATAL_ERROR "Cannot find Tracy folder; is the external folder properly set up?")
+endif()
+message(STATUS "Tracy path   : ${TRACY_PATH}")
 message(STATUS)
 
 
 # The source files for the tracy-interface library
 set(tracy-interface_sourceFiles
     "src/lib/tracy_interface.cpp"
+    "${TRACY_PATH}/TracyClient.cpp"
 )
-
-# Configure profiling
-if(tracy-interface.profiling)
-    find_path(TRACY_PATH "Tracy.hpp" PATH "external/tracy/")
-    if(NOT EXISTS "${TRACY_PATH}")
-        message(FATAL_ERROR "Cannot find Tracy folder; is the external folder properly set up?")
-    endif()
-    message(STATUS "Tracy path   : ${TRACY_PATH}")
-    message(STATUS)
-
-    # Add TracyClient.cpp to the source list
-    set(tracy-interface_sourceFiles ${tracy-interface_sourceFiles} "${TRACY_PATH}/TracyClient.cpp")
-endif()
-
 
 # The tracy-interface library target
 add_library(tracy-interface ${tracy-interface_sourceFiles})
@@ -58,13 +50,9 @@ target_include_directories(tracy-interface PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 target_compile_features(tracy-interface PUBLIC cxx_std_17)
-
-# Settings for profiling builds
-if(tracy-interface.profiling)
-    target_include_directories(tracy-interface PRIVATE "${TRACY_PATH}")
-    target_compile_definitions(tracy-interface PUBLIC TRACY_INTERFACE_ENABLE_PROFILING=1)
-    target_compile_definitions(tracy-interface PRIVATE TRACY_ENABLE=1)
-endif()
+target_include_directories(tracy-interface PRIVATE "${TRACY_PATH}")
+target_compile_definitions(tracy-interface PUBLIC TRACY_INTERFACE_ENABLE_PROFILING=1)
+target_compile_definitions(tracy-interface PRIVATE TRACY_ENABLE=1)
 
 
 set(TARGETS_TO_INSTALL tracy-interface)

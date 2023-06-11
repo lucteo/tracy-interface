@@ -15,8 +15,8 @@ class TracyInterfaceRecipe(ConanFile):
    generators = "cmake"
    build_policy = "missing"   # Some of the dependencies don't have builds for all our targets
 
-   options = {"shared": [True, False], "fPIC": [True, False], "with_profiling": [True, False], "with_tracy_bin": [True, False]}
-   default_options = {"shared": False, "fPIC": True, "with_profiling": True, "with_tracy_bin": True}
+   options = {"shared": [True, False], "fPIC": [True, False], "with_tracy_bin": [True, False]}
+   default_options = {"shared": False, "fPIC": True, "with_tracy_bin": True}
 
    exports = "LICENSE"
    exports_sources = ("src/*", "external/*", "CMakeLists.txt", "Config.cmake.in")
@@ -53,8 +53,6 @@ class TracyInterfaceRecipe(ConanFile):
       cmake = CMake(self)
       if self.settings.compiler == "Visual Studio" and self.options.shared:
          cmake.definitions["CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS"] = True
-      if self.options.with_profiling:
-         cmake.definitions["tracy-interface.profiling"] = "ON"
       if self.options.with_tracy_bin:
          cmake.definitions["tracy-interface.with_tracy_bin"] = "ON"
 
