@@ -1,13 +1,4 @@
-cmake_minimum_required(VERSION 3.17.0)
-
-project(tracy-interface-dev LANGUAGES CXX)
-
-if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    conan_basic_setup(TARGETS)
-else()
-    message(ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
-endif()
+cmake_minimum_required(VERSION 3.24)
 
 project(tracy-interface VERSION 0.1.0 LANGUAGES CXX)
 
@@ -55,15 +46,11 @@ target_compile_definitions(tracy-interface PUBLIC TRACY_INTERFACE_ENABLE_PROFILI
 target_compile_definitions(tracy-interface PRIVATE TRACY_ENABLE=1)
 
 
-set(TARGETS_TO_INSTALL tracy-interface)
-
-add_library(tracy-interface::tracy-interface ALIAS tracy-interface)
-
-
-
 # Build the Tracy profiler if we are told to do so
 if(tracy-interface.with_tracy_bin)
     include(ExternalProject)
+
+    set(TRACY_ARCH "x86_64")
 
     find_program(MAKE_EXECUTABLE
         NAMES gmake mingw32-make make
@@ -74,7 +61,7 @@ if(tracy-interface.with_tracy_bin)
     ExternalProject_Add(tracy-profiler
         SOURCE_DIR "${TRACY_PATH}"
         CONFIGURE_COMMAND ""
-        BUILD_COMMAND ${MAKE_EXECUTABLE} -j${Ncpu} -C "${TRACY_PATH}/profiler/build/unix/" -f release.mk all
+        BUILD_COMMAND ${MAKE_EXECUTABLE} ARCH="${TRACY_ARCH}" -j${Ncpu} -C "${TRACY_PATH}/profiler/build/unix/" -f release.mk all
         INSTALL_COMMAND install "${TRACY_PATH}/profiler/build/unix/Tracy-release" "<INSTALL_DIR>/Tracy"
         BUILD_BYPRODUCTS "<INSTALL_DIR>/Tracy"  # Ninja needs this
     )
@@ -82,47 +69,5 @@ if(tracy-interface.with_tracy_bin)
     install(PROGRAMS "${INSTALL_DIR}/Tracy" DESTINATION bin)
 endif()
 
+install(TARGETS tracy-interface)
 
-# Define installation settings for tracy-interface
-install(TARGETS ${TARGETS_TO_INSTALL} EXPORT tracy-interfaceTargets
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
-        INCLUDES DESTINATION include
-)
-install(EXPORT tracy-interfaceTargets
-        FILE tracy-interfaceTargets.cmake
-        NAMESPACE tracy-interface::
-        DESTINATION lib/cmake/tracy-interface
-)
-
-# Ensure that all the include files are installed
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/include/
-        DESTINATION include
-        USE_SOURCE_PERMISSIONS
-        FILES_MATCHING PATTERN "*.hpp"
-)
-
-# Write the tracy-interfaceConfig.cmake and tracy-interfaceConfigVersion.cmake files
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file("tracy-interfaceConfigVersion.cmake"
-        VERSION "${tracy-interface_VERSION}"
-        COMPATIBILITY SameMajorVersion
-)
-configure_package_config_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/tracy-interfaceConfig.cmake
-        INSTALL_DESTINATION lib/cmake/tracy-interface
-)
-install(FILES
-            "${CMAKE_CURRENT_BINARY_DIR}/tracy-interfaceConfig.cmake"
-            "${CMAKE_CURRENT_BINARY_DIR}/tracy-interfaceConfigVersion.cmake"
-        DESTINATION lib/cmake/tracy-interface
-)
-
-# Basic CPack support
-include(InstallRequiredSystemLibraries)
-set(CPACK_PACKAGE_VENDOR "Lucian Radu Teodorescu")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CMAKE_PROJECT_HOMEPAGE_URL "https://github.com/lucteo/tracy-interface")
-include(CPack)
