@@ -44,6 +44,7 @@ target_compile_features(tracy-interface PUBLIC cxx_std_17)
 target_include_directories(tracy-interface PRIVATE "${TRACY_PATH}")
 target_compile_definitions(tracy-interface PUBLIC TRACY_INTERFACE_ENABLE_PROFILING=1)
 target_compile_definitions(tracy-interface PRIVATE TRACY_ENABLE=1)
+set_target_properties(tracy-interface PROPERTIES PUBLIC_HEADER "src/include/tracy_interface.hpp")
 
 
 # Build the Tracy profiler if we are told to do so
